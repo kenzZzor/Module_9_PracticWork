@@ -1,0 +1,147 @@
+public interface IReport
+{
+    string Generate();
+}
+
+public class SelsReport : IReport {
+    public string Generate()
+    {
+        return "UserReport";
+    }
+}
+
+public class UserReport : IReport
+{
+    public string Generate()
+    {
+        return "UserReport";
+    }
+}
+
+public abstract class ReportDecorator : IReport
+{
+    private IReport report;
+
+    protected ReportDecorator(IReport report)
+    {
+        this.report = report;
+    }
+
+    public string Generate()
+    {
+        return report.Generate();
+    }
+}
+
+public class DateFilterDecorator : ReportDecorator
+{
+    private DateTime startDate;
+    private DateTime endDate;
+
+    public DateFilterDecorator(IReport report, DateTime startDate, DateTime endDate) : base(report)
+
+    {
+        this.startDate = startDate;
+        this.endDate = endDate;
+    }
+
+    public override string Generate()
+    {
+        var data = base.Generate();
+        return "Filter from" + startDate + " " + data;
+    }
+}
+}
+
+
+// Фильтр по дате
+public class DateFilterDecorator : ReportDecorator
+{
+    private DateTime startDate;
+    private DateTime endDate;
+
+    public DateFilterDecorator(IReport report, DateTime startDate, DateTime endDate) : base(report)
+    {
+        this.startDate = startDate;
+        this.endDate = endDate;
+    }
+
+    public override string Generate()
+    {
+        return base.Generate() + $", filtered by date from {startDate.ToShortDateString()} to {endDate.ToShortDateString()}";
+    }
+}
+
+// Новый декоратор: фильтрация по сумме продаж
+public class AmountFilterDecorator : ReportDecorator
+{
+    private double minAmount;
+    private double maxAmount;
+
+    public AmountFilterDecorator(IReport report, double minAmount, double maxAmount) : base(report)
+    {
+        this.minAmount = minAmount;
+        this.maxAmount = maxAmount;
+    }
+
+    public override string Generate()
+    {
+        return base.Generate() + $", filtered by amount between {minAmount} and {maxAmount}";
+    }
+}
+
+
+
+public class ReportFilterBuilder
+{
+    private IReport report;
+
+    public ReportFilterBuilder(IReport report)
+    {
+        this.report = report;
+    }
+
+    public ReportFilterBuilder WithDateFilter(DateTime startDate, DateTime endDate)
+    {
+        report = new DateFilterDecorator(report, startDate, endDate);
+        return this;
+    }
+
+    public ReportFilterBuilder WithAmountFilter(double minAmount, double maxAmount)
+    {
+        report = new AmountFilterDecorator(report, minAmount, maxAmount);
+        return this;
+    }
+
+    public ReportFilterBuilder WithUserCharacteristicFilter(string characteristic)
+    {
+        report = new UserCharacteristicFilterDecorator(report, characteristic);
+        return this;
+    }
+
+    public IReport Build()
+    {
+        return report;
+    }
+}
+
+
+public class Program
+{
+    static void Main(string[] args)
+    {
+        
+        IReport report = new SalesReport();
+
+        var builder = new ReportFilterBuilder(report);
+
+        builder.WithDateFilter(DateTime.Now.AddMonths(-6), DateTime.Now)
+               .WithAmountFilter(100, 1000);
+
+        builder.WithUserCharacteristicFilter("VIP");
+
+        IReport finalReport = builder.Build();
+
+        Console.WriteLine(finalReport.Generate());
+    }
+}
