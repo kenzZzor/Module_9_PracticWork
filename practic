@@ -1,0 +1,154 @@
+public interface InternalDeliveryService
+{
+    void DeliveryOrder(string orderId);
+    void GetDeliveryStatus(string orderId);
+}
+
+
+public interface InternalDeliveryReport : InternalDeliveryService
+{
+    public void DeliveryOrder(string orderId)
+    {
+        Console.WriteLine("Order DeliveryOrder: " + orderId);
+    }
+    public string GetDeliveryStatus(string orderId)
+    {
+        return "Status for Order" + orderId;
+    }
+}
+
+public class GlovoLogisticsService
+{
+    public void ShipItem(int ItemId)
+    public string TrackShipment(int ItemId)
+}
+
+
+public class LogisticAdapterGlovo : InternalDeliveryService
+{ 
+    private GlovoLogisticsService glovoLogistics;
+
+    public LogisticAdapterGlovo(GlovoLogisticsService glovoLogistics)
+    {
+        this.glovoLogistics = glovoLogistics;   
+    }
+
+    public void DeliveryOrder(string OrderId)
+    {
+        int item = int.Parse(OrderId);
+        glovoLogistics.ShipItem(item);
+
+    }
+
+    public string GetDeliveryStatus(string orderId)
+    {
+        int item = int.Parse(orderId);
+        return glovoLogistics.TrackShipment(item);
+    }
+}
+
+
+public class LogisticAdapterGlovo : InternalDeliveryService
+{
+    private GlovoLogisticsService glovoLogistics;
+
+    public LogisticAdapterGlovo(GlovoLogisticsService glovoLogistics)
+    {
+        this.glovoLogistics = glovoLogistics;
+    }
+
+    public void DeliveryOrder(string orderId)
+    {
+        try
+        {
+            int item = int.Parse(orderId);
+            Console.WriteLine("Logging: Initiating Glovo delivery.");
+            glovoLogistics.ShipItem(item);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during Glovo delivery: {ex.Message}");
+        }
+    }
+
+    public string GetDeliveryStatus(string orderId)
+    {
+        try
+        {
+            int item = int.Parse(orderId);
+            return glovoLogistics.TrackShipment(item);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error retrieving Glovo delivery status: {ex.Message}");
+            return "Error: Unable to retrieve delivery status.";
+        }
+    }
+
+    public double GetShippingCost(string orderId)
+    {
+        // Допустим, расчет стоимости в Glovo не предусмотрен,
+        // но мы можем вернуть статичную стоимость для примера.
+        return 5.99; 
+    }
+}
+
+public interface InternalDeliveryService
+{
+    void DeliveryOrder(string orderId);
+    string GetDeliveryStatus(string orderId);
+    double GetShippingCost(string orderId); // Новый метод для расчета стоимости доставки
+}
+
+public class InternalDeliveryReport : InternalDeliveryService
+{
+    public void DeliveryOrder(string orderId)
+    {
+        Console.WriteLine("Order DeliveryOrder: " + orderId);
+    }
+
+    public string GetDeliveryStatus(string orderId)
+    {
+        return "Status for Order " + orderId;
+    }
+
+    public double GetShippingCost(string orderId)
+    {
+        // Простая статическая стоимость
+        return 10.00;
+    }
+}
+
+
+
+public class Program
+{
+    static void Main(string[] args)
+    {
+        InternalDeliveryService service = null;
+
+        string typeDelivery = "Yandex"; // Попробуем Yandex для примера
+
+        if (typeDelivery == "Glovo")
+        {
+            service = new LogisticAdapterGlovo(new GlovoLogisticsService());
+        }
+        else if (typeDelivery == "Yandex")
+        {
+            service = new LogisticAdapterYandex(new YandexDeliveryService());
+        }
+        else
+        {
+            service = new InternalDeliveryReport(); // Локальная доставка
+        }
+
+        string orderId = "42656786";
+        service.DeliveryOrder(orderId);
+        string status = service.GetDeliveryStatus(orderId);
+        Console.WriteLine(status);
+
+        double cost = service.GetShippingCost(orderId);
+        Console.WriteLine($"Shipping cost for order {orderId}: {cost} dollars.");
+    }
+}
+
